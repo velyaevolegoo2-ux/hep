@@ -11,7 +11,8 @@ router = APIRouter()
 @router.get("/auth/login")
 async def login(request: Request):
     """Redirect to Google OAuth"""
-    redirect_uri = f"{os.getenv('BACKEND_URL', 'http://localhost:8000')}/auth/callback"
+    backend_url = os.getenv('BACKEND_URL', 'https://hep-backend.onrender.com')
+    redirect_uri = f"{backend_url}/auth/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/auth/callback")
@@ -22,13 +23,15 @@ async def callback(request: Request):
         user = token.get('userinfo')
         
         if not user:
-            return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=no_user_info")
+            frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+            return RedirectResponse(url=f"{frontend_url}?error=no_user_info")
         
         email = user.get('email')
         
         # Check if email is allowed
         if email not in ALLOWED_EMAILS:
-            return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=unauthorized")
+            frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+            return RedirectResponse(url=f"{frontend_url}?error=unauthorized")
         
         # Save user in session
         request.session['user'] = {
@@ -38,17 +41,20 @@ async def callback(request: Request):
         }
         
         # Redirect to frontend
-        return RedirectResponse(url=os.getenv('FRONTEND_URL'))
+        frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+        return RedirectResponse(url=frontend_url)
     
     except Exception as e:
         print(f"Auth error: {e}")
-        return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=auth_failed")
+        frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+        return RedirectResponse(url=f"{frontend_url}?error=auth_failed")
 
 @router.get("/auth/logout")
 async def logout(request: Request):
     """Logout user"""
     request.session.clear()
-    return RedirectResponse(url=os.getenv('FRONTEND_URL'))
+    frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+    return RedirectResponse(url=frontend_url)
 
 @router.get("/auth/me")
 async def get_user(request: Request):
