@@ -11,17 +11,17 @@ from itsdangerous import URLSafeTimedSerializer
 oauth = OAuth()
 oauth.register(
     name='google',
-    client_id=os.getenv('9441494821-vllfhsjemcgcv5chcfgk02484vb1f42t.apps.googleusercontent.com'),
-    client_secret=os.getenv('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'),
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
 
 # Session serializer
-serializer = URLSafeTimedSerializer(os.getenv('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'))
+serializer = URLSafeTimedSerializer(os.getenv('GOOGLE_CLIENT_SECRET'))
 
 # Allowed emails
-ALLOWED_EMAILS = os.getenv('velyaev.olegoo2gmail.com', '').split(',')
+ALLOWED_EMAILS = os.getenv('ALLOWED_EMAILS', '').split(',')
 
 def is_authenticated(request: Request) -> bool:
     """Check if user is authenticated"""
