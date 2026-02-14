@@ -28,7 +28,8 @@ async def callback(request: Request):
         
         if not user:
             print("ERROR: No user info")
-            return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=no_user_info")
+            frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+            return RedirectResponse(url=f"{frontend_url}?error=no_user_info")
         
         email = user.get('email')
         print(f"Email: {email}")
@@ -37,25 +38,17 @@ async def callback(request: Request):
         # Check if email is allowed
         if email not in ALLOWED_EMAILS:
             print(f"ERROR: Email {email} not in allowed list")
-            return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=unauthorized")
+            frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+            return RedirectResponse(url=f"{frontend_url}?error=unauthorized")
         
         # Create JWT token
         jwt_token = create_access_token(email, user.get('name', ''))
         print(f"JWT token created: {jwt_token[:20]}...")
         
-        # Redirect to frontend with token in URL fragment
+        # Redirect to frontend with token in URL
         frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
-        print(f"Returning HTML with redirect to: {frontend_url}")
-        return HTMLResponse(f"""
-            <html>
-                <script>
-                    console.log('Setting token in localStorage');
-                    localStorage.setItem('auth_token', '{jwt_token}');
-                    console.log('Redirecting to {frontend_url}');
-                    window.location.href = '{frontend_url}';
-                </script>
-            </html>
-        """)
+        print(f"Redirecting to: {frontend_url}?token={jwt_token[:20]}...")
+        return RedirectResponse(url=f"{frontend_url}?token={jwt_token}")
     
     except Exception as e:
         print(f"=== AUTH ERROR: {e} ===")
@@ -68,14 +61,7 @@ async def callback(request: Request):
 async def logout(request: Request):
     """Logout endpoint (token deletion happens on frontend)"""
     frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
-    return HTMLResponse(f"""
-        <html>
-            <script>
-                localStorage.removeItem('auth_token');
-                window.location.href = '{frontend_url}';
-            </script>
-        </html>
-    """)
+    return RedirectResponse(url=frontend_url)
 
 @router.get("/auth/me")
 async def get_user(request: Request):
