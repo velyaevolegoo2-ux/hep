@@ -103,27 +103,35 @@ async def sync_notion(db: Session = Depends(get_db)):
         orders = await sync_orders_from_notion()
         
         synced_count = 0
+        batch_size = 100  # Process in batches of 100
         
-        for order_data in orders:
-            # Check if order exists
-            existing = db.query(OrderCache).filter(
-                OrderCache.order_number == order_data["order_number"]
-            ).first()
+        for i in range(0, len(orders), batch_size):
+            batch = orders[i:i+batch_size]
             
-            if existing:
-                # Update existing
-                for key, value in order_data.items():
-                    if key != "notion_page_id":  # Don't update page ID
-                        setattr(existing, key, value)
-                existing.last_synced = datetime.utcnow()
-            else:
-                # Create new
-                new_order = OrderCache(**order_data)
-                db.add(new_order)
+            for order_data in batch:
+                if not order_data.get("order_number"):
+                    continue  # Skip orders without number
+                
+                # Check if order exists
+                existing = db.query(OrderCache).filter(
+                    OrderCache.order_number == order_data["order_number"]
+                ).first()
+                
+                if existing:
+                    # Update existing
+                    for key, value in order_data.items():
+                        if key != "notion_page_id":
+                            setattr(existing, key, value)
+                    existing.last_synced = datetime.utcnow()
+                else:
+                    # Create new
+                    new_order = OrderCache(**order_data)
+                    db.add(new_order)
+                
+                synced_count += 1
             
-            synced_count += 1
-        
-        db.commit()
+            # Commit this batch
+            db.commit()
         
         return {
             "success": True,
@@ -132,4 +140,5 @@ async def sync_notion(db: Session = Depends(get_db)):
     
     except Exception as e:
         db.rollback()
+        print(f"Error during sync: {e}")
         raise HTTPException(status_code=500, detail=str(e))
