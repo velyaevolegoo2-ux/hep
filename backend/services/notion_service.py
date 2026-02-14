@@ -58,7 +58,7 @@ async def sync_orders_from_notion() -> List[Dict]:
                     "status": _get_status(properties.get("Status")),
                     "deadline": _get_date(properties.get("Нужен к")),
                     "master_date": _get_date(properties.get("Дата мастера")),
-                    "master": _get_people(properties.get("Мастер")),
+             "master": _get_people(properties.get("Мастер")) or _get_rich_text(properties.get("Мастер")) or str(properties.get("Мастер", {}).get("type", "UNKNOWN")),
                     "sum_total": _get_number(properties.get("Сумма")),
                     "sum_etsy": _get_number(properties.get("Сумма Etsy")),
                     "tags": _get_multi_select(properties.get("Теги")),
