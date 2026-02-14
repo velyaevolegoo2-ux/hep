@@ -5,9 +5,7 @@ Simplified version of Hepler without Etsy integration
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
-from routes import orders, translate, telegram, auth_routes
-from auth import oauth
-import os
+from routes import orders, translate, telegram
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -23,9 +21,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://hep-q9de.onrender.com",  # Production frontend
-        "http://localhost:3000",     # Local development
-        "http://localhost:8000",     # Local testing
+        "https://hep-q9de.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:8000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -36,7 +34,6 @@ app.add_middleware(
 app.include_router(orders.router)
 app.include_router(translate.router)
 app.include_router(telegram.router)
-app.include_router(auth_routes.router)
 
 @app.get("/")
 async def root():
@@ -55,3 +52,18 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+Закоммитьте!
+
+---
+
+## ШАГ 3: Чистим requirements.txt
+
+GitHub → `backend/requirements.txt` → Edit
+
+**Удалите эти строки:**
+```
+authlib==1.3.0
+itsdangerous==2.2.0
+PyJWT==2.8.0
