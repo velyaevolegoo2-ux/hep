@@ -21,7 +21,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://hep.onrender.com",  # Production frontend
+        "https://hep-q9de.onrender.com",  # Production frontend
         "http://localhost:3000",     # Local development
         "http://localhost:8000",     # Local testing
     ],
