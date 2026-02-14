@@ -333,14 +333,18 @@
         }
 
         function renderOrders(ordersToRender) {
-            const container = document.getElementById('ordersList');
-            container.innerHTML = ordersToRender.map(order => `
-                <div class="order-item" onclick="selectOrder('${order.order_number}')">
-                    ${order.order_number}
-                </div>
-            `).join('');
-        }
-
+    // Sort by order_number descending (like Notion)
+    const sorted = [...ordersToRender].sort((a, b) => {
+        return b.order_number.localeCompare(a.order_number, 'ru');
+    });
+    
+    const container = document.getElementById('ordersList');
+    container.innerHTML = sorted.map(order => `
+        <div class="order-item" onclick="selectOrder('${order.order_number}')">
+            ${order.order_number}
+        </div>
+    `).join('');
+}
         function filterOrders(search) {
             if (!search) {
                 renderOrders(orders);
@@ -533,27 +537,53 @@
         }
 
         async function syncNotion() {
-            const button = document.querySelector('.sync-button');
-            button.classList.add('loading');
-            button.textContent = '...';
+    const button = document.querySelector('.sync-button');
+    
+    // Change to yellow with "Wait..."
+    button.style.background = '#ffa726';
+    button.textContent = 'Wait...';
+    button.disabled = true;
+    
+    // Add pulsing animation
+    button.style.animation = 'pulse 1.5s ease-in-out infinite';
 
-            try {
-                const response = await fetch(`${API_URL}/api/orders/sync-notion`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    console.log(`✓ Synced: ${data.synced_count} orders`);
-                    await loadOrders();
-                }
-            } catch (error) {
-                console.error('Sync failed:', error);
-            } finally {
-                button.classList.remove('loading');
+    try {
+        const response = await fetch(`${API_URL}/api/orders/sync-notion`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`✓ Synced: ${data.synced_count} orders`);
+            await loadOrders();
+            
+            // Show success state
+            button.style.background = '#4caf50';
+            button.style.animation = 'none';
+            button.textContent = '✓ Done';
+            
+            // Return to normal after 2 seconds
+            setTimeout(() => {
+                button.style.background = '#4caf50';
                 button.textContent = 'Sync';
-            }
+                button.disabled = false;
+            }, 2000);
         }
+    } catch (error) {
+        console.error('Sync failed:', error);
+        
+        // Show error state
+        button.style.background = '#ef5350';
+        button.style.animation = 'none';
+        button.textContent = '✗ Error';
+        
+        setTimeout(() => {
+            button.style.background = '#4caf50';
+            button.textContent = 'Sync';
+            button.disabled = false;
+        }, 2000);
+    }
+}
     </script>
 </body>
 </html>
