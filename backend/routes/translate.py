@@ -1,60 +1,52 @@
 """
-Translation routes for Hep
-Handles EN <-> RU translations via Claude
+Translation API routes using Claude
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from services.claude_service import translate_to_russian, translate_to_english
+from anthropic import Anthropic
+import os
 
 router = APIRouter(prefix="/api/translate", tags=["translate"])
 
+# Initialize Anthropic client
+client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
 class TranslateRequest(BaseModel):
     text: str
-    direction: str  # "to_russian" or "to_english"
-    order_number: str = None  # Optional, only for to_russian
+    order_number: str
 
-class TranslateResponse(BaseModel):
-    translation: str
-    original: str
-
-@router.post("/", response_model=TranslateResponse)
-async def translate(request: TranslateRequest):
+@router.post("/")
+async def translate_text(request: TranslateRequest):
     """
-    Translate text between English and Russian
-    
-    CRITICAL BEHAVIOR:
-    - For "to_russian": Adds order number at the beginning (if provided)
-    - For "to_english": No order number needed
-    
-    Args:
-        text: Text to translate
-        direction: "to_russian" or "to_english"
-        order_number: Order number (e.g., а511) - only for to_russian
-    
-    Returns:
-        {
-            "translation": "Translated text",
-            "original": "Original text"
-        }
+    Translate text with auto language detection
+    EN → RU or RU → EN
     """
     try:
-        if request.direction == "to_russian":
-            translation = await translate_to_russian(
-                request.text,
-                order_number=request.order_number
-            )
-        elif request.direction == "to_english":
-            translation = await translate_to_english(request.text)
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid direction. Must be 'to_russian' or 'to_english'"
-            )
-        
-        return TranslateResponse(
-            translation=translation,
-            original=request.text
+        # Auto-detect language and translate
+        prompt = f"""Определи язык текста и переведи:
+- Если текст на английском → переведи на русский
+- Если текст на русском → переведи на английский
+
+Контекст: заказ костюма №{request.order_number}
+
+Текст для перевода:
+{request.text}
+
+Верни ТОЛЬКО перевод, без пояснений."""
+
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
         )
+        
+        translation = message.content[0].text.strip()
+        
+        return {
+            "translation": translation,
+            "order_number": request.order_number
+        }
     
     except Exception as e:
+        print(f"Translation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
