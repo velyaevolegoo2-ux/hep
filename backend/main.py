@@ -52,18 +52,3 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-```
-
-Закоммитьте!
-
----
-
-## ШАГ 3: Чистим requirements.txt
-
-GitHub → `backend/requirements.txt` → Edit
-
-**Удалите эти строки:**
-```
-authlib==1.3.0
-itsdangerous==2.2.0
-PyJWT==2.8.0
