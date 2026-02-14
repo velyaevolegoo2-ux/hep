@@ -19,36 +19,48 @@ async def login(request: Request):
 async def callback(request: Request):
     """Handle OAuth callback and return JWT token"""
     try:
+        print("=== AUTH CALLBACK START ===")
         token = await oauth.google.authorize_access_token(request)
+        print(f"Token received: {bool(token)}")
+        
         user = token.get('userinfo')
+        print(f"User info: {user}")
         
         if not user:
+            print("ERROR: No user info")
             return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=no_user_info")
         
         email = user.get('email')
+        print(f"Email: {email}")
+        print(f"Allowed emails: {ALLOWED_EMAILS}")
         
         # Check if email is allowed
         if email not in ALLOWED_EMAILS:
+            print(f"ERROR: Email {email} not in allowed list")
             return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=unauthorized")
         
         # Create JWT token
         jwt_token = create_access_token(email, user.get('name', ''))
+        print(f"JWT token created: {jwt_token[:20]}...")
         
         # Redirect to frontend with token in URL fragment
         frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
+        print(f"Returning HTML with redirect to: {frontend_url}")
         return HTMLResponse(f"""
             <html>
                 <script>
-                    // Save token to localStorage
+                    console.log('Setting token in localStorage');
                     localStorage.setItem('auth_token', '{jwt_token}');
-                    // Redirect to main page
+                    console.log('Redirecting to {frontend_url}');
                     window.location.href = '{frontend_url}';
                 </script>
             </html>
         """)
     
     except Exception as e:
-        print(f"Auth error: {e}")
+        print(f"=== AUTH ERROR: {e} ===")
+        import traceback
+        traceback.print_exc()
         frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
         return RedirectResponse(url=f"{frontend_url}?error=auth_failed")
 
