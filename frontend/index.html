@@ -324,14 +324,26 @@
         });
 
         async function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                // No token - redirect to login
+                window.location.href = `${API_URL}/auth/login`;
+                return;
+            }
+
             try {
+                // Verify token
                 const response = await fetch(`${API_URL}/auth/me`, {
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
                 const data = await response.json();
                 
                 if (!data.authenticated) {
-                    // Not authenticated - redirect to login
+                    // Invalid token - clear and redirect
+                    localStorage.removeItem('auth_token');
                     window.location.href = `${API_URL}/auth/login`;
                     return;
                 }
@@ -343,8 +355,16 @@
                 
             } catch (error) {
                 console.error('Auth check failed:', error);
+                localStorage.removeItem('auth_token');
                 window.location.href = `${API_URL}/auth/login`;
             }
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('auth_token');
+            return {
+                'Authorization': `Bearer ${token}`
+            };
         }
 
         function setupEventListeners() {
@@ -363,7 +383,7 @@
         async function loadOrders() {
             try {
                 const response = await fetch(`${API_URL}/api/orders/`, {
-                    credentials: 'include'
+                    headers: getAuthHeaders()
                 });
                 orders = await response.json();
                 renderOrders(orders);
@@ -402,7 +422,7 @@
         async function selectOrder(orderNumber) {
             try {
                 const response = await fetch(`${API_URL}/api/orders/${orderNumber}`, {
-                    credentials: 'include'
+                    headers: getAuthHeaders()
                 });
                 currentOrder = await response.json();
                 displayOrderInfo();
@@ -451,8 +471,10 @@
             try {
                 const response = await fetch(`${API_URL}/api/translate/`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
                     body: JSON.stringify({
                         text: englishText,
                         direction: 'to_russian',
@@ -540,8 +562,10 @@
             try {
                 const response = await fetch(`${API_URL}/api/telegram/send`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
                     body: JSON.stringify({
                         order_number: currentOrder.order_number,
                         destination: destination,
@@ -595,7 +619,7 @@
             try {
                 const response = await fetch(`${API_URL}/api/orders/sync-notion`, {
                     method: 'POST',
-                    credentials: 'include'
+                    headers: getAuthHeaders()
                 });
                 const data = await response.json();
                 
