@@ -1,9 +1,9 @@
 """
-Authentication routes for Google OAuth
+Authentication routes for Google OAuth with JWT
 """
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse
-from auth import oauth, ALLOWED_EMAILS
+from fastapi.responses import RedirectResponse, HTMLResponse
+from auth import oauth, ALLOWED_EMAILS, create_access_token
 import os
 
 router = APIRouter()
@@ -17,32 +17,35 @@ async def login(request: Request):
 
 @router.get("/auth/callback")
 async def callback(request: Request):
-    """Handle OAuth callback"""
+    """Handle OAuth callback and return JWT token"""
     try:
         token = await oauth.google.authorize_access_token(request)
         user = token.get('userinfo')
         
         if not user:
-            frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
-            return RedirectResponse(url=f"{frontend_url}?error=no_user_info")
+            return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=no_user_info")
         
         email = user.get('email')
         
         # Check if email is allowed
         if email not in ALLOWED_EMAILS:
-            frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
-            return RedirectResponse(url=f"{frontend_url}?error=unauthorized")
+            return RedirectResponse(url=f"{os.getenv('FRONTEND_URL')}?error=unauthorized")
         
-        # Save user in session
-        request.session['user'] = {
-            'email': email,
-            'name': user.get('name'),
-            'picture': user.get('picture')
-        }
+        # Create JWT token
+        jwt_token = create_access_token(email, user.get('name', ''))
         
-        # Redirect to frontend
+        # Redirect to frontend with token in URL fragment
         frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
-        return RedirectResponse(url=frontend_url)
+        return HTMLResponse(f"""
+            <html>
+                <script>
+                    // Save token to localStorage
+                    localStorage.setItem('auth_token', '{jwt_token}');
+                    // Redirect to main page
+                    window.location.href = '{frontend_url}';
+                </script>
+            </html>
+        """)
     
     except Exception as e:
         print(f"Auth error: {e}")
@@ -51,15 +54,23 @@ async def callback(request: Request):
 
 @router.get("/auth/logout")
 async def logout(request: Request):
-    """Logout user"""
-    request.session.clear()
+    """Logout endpoint (token deletion happens on frontend)"""
     frontend_url = os.getenv('FRONTEND_URL', 'https://hep-q9de.onrender.com')
-    return RedirectResponse(url=frontend_url)
+    return HTMLResponse(f"""
+        <html>
+            <script>
+                localStorage.removeItem('auth_token');
+                window.location.href = '{frontend_url}';
+            </script>
+        </html>
+    """)
 
 @router.get("/auth/me")
 async def get_user(request: Request):
-    """Get current user info"""
-    user = request.session.get('user')
-    if not user:
+    """Verify token from Authorization header"""
+    from auth import get_current_user
+    try:
+        user = get_current_user(request)
+        return {"authenticated": True, "user": user}
+    except:
         return {"authenticated": False}
-    return {"authenticated": True, "user": user}
