@@ -263,52 +263,126 @@
                 box-shadow: 0 0 0 0 rgba(255, 167, 38, 0);
             }
         }
+
+        /* Login Screen */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #faf9f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 320px;
+        }
+
+        .login-box h1 {
+            margin: 0 0 24px 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e8e3db;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .login-box button:hover {
+            background: #43a047;
+        }
+
+        #loginError {
+            color: #ef5350;
+            font-size: 12px;
+            margin-top: 12px;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- LEFT COLUMN -->
-        <div class="orders-column">
-            <div class="orders-header">Заказы</div>
-            <div class="orders-search">
-                <input type="text" id="searchInput" placeholder="">
-            </div>
-            <button class="sync-button" onclick="syncNotion()">Sync</button>
-            <div class="orders-list" id="ordersList">
-                <!-- Orders will be loaded here -->
-            </div>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <h1>Вход в Hep</h1>
+            <input type="password" id="passwordInput" placeholder="Введите пароль" onkeypress="if(event.key==='Enter') login()">
+            <button onclick="login()">Войти</button>
+            <div id="loginError"></div>
         </div>
+    </div>
 
-        <!-- RIGHT COLUMN -->
-        <div class="translate-column">
-            <div class="order-info" id="orderInfo">
-                <div class="order-header">
-                    <div class="order-number" id="orderNumber">Выберите заказ</div>
-                    <div class="order-meta" id="orderMeta">
-                        <!-- Meta tags will appear here -->
-                    </div>
+    <!-- Main App (hidden until logged in) -->
+    <div id="mainApp" style="display: none;">
+        <div class="container">
+            <!-- LEFT COLUMN -->
+            <div class="orders-column">
+                <div class="orders-header">Заказы</div>
+                <div class="orders-search">
+                    <input type="text" id="searchInput" placeholder="">
+                </div>
+                <button class="sync-button" onclick="syncNotion()">Sync</button>
+                <div class="orders-list" id="ordersList">
+                    <!-- Orders will be loaded here -->
                 </div>
             </div>
 
-            <div class="translate-section">
-                <div class="translate-label">Английский (оригинал)</div>
-                <textarea id="englishText" placeholder="Вставьте текст от клиента на английском..."></textarea>
-            </div>
+            <!-- RIGHT COLUMN -->
+            <div class="translate-column">
+                <div class="order-info" id="orderInfo">
+                    <div class="order-header">
+                        <div class="order-number" id="orderNumber">Выберите заказ</div>
+                        <div class="order-meta" id="orderMeta">
+                            <!-- Meta tags will appear here -->
+                        </div>
+                    </div>
+                </div>
 
-            <div class="translate-section">
-                <div class="translate-label">Русский (для мастера)</div>
-                <textarea id="russianText" class="russian-field" placeholder="Перевод появится здесь автоматически..."></textarea>
-            </div>
+                <div class="translate-section">
+                    <div class="translate-label">Английский (оригинал)</div>
+                    <textarea id="englishText" placeholder="Вставьте текст от клиента на английском..."></textarea>
+                </div>
 
-            <div class="buttons-row">
-                <button class="btn-help" onclick="toggleSend('problems', this)">?</button>
-                <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button>
-                <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button>
+                <div class="translate-section">
+                    <div class="translate-label">Русский (для мастера)</div>
+                    <textarea id="russianText" class="russian-field" placeholder="Перевод появится здесь автоматически..."></textarea>
+                </div>
+
+                <div class="buttons-row">
+                    <button class="btn-help" onclick="toggleSend('problems', this)">?</button>
+                    <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button>
+                    <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button>
+                </div>
             </div>
         </div>
     </div>
 
- <script>
+    <script>
         // Configuration
         const API_URL = 'https://hep-backend.onrender.com';
         
@@ -317,12 +391,55 @@
         let orders = [];
         let translateTimeout = null;
         let pendingSends = [];
+        let authToken = null;
 
-        // Initialize
+        // Initialize - check if already logged in
         document.addEventListener('DOMContentLoaded', () => {
+            authToken = localStorage.getItem('hep_auth_token');
+            if (authToken) {
+                // Already logged in
+                showMainApp();
+            }
+        });
+
+        async function login() {
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (!password) {
+                errorDiv.textContent = 'Введите пароль';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    localStorage.setItem('hep_auth_token', authToken);
+                    showMainApp();
+                } else {
+                    errorDiv.textContent = 'Неверный пароль';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Ошибка подключения';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
             loadOrders();
             setupEventListeners();
-        });
+        }
 
         function setupEventListeners() {
             // Search
