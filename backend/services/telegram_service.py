@@ -3,8 +3,10 @@ Telegram Bot service for sending messages to masters
 Based on Hepler implementation with CRITICAL principles
 """
 import os
-from telegram import Bot
+from telegram import Bot, InputMediaPhoto
 from dotenv import load_dotenv
+import base64
+import io
 
 load_dotenv()
 
@@ -27,7 +29,7 @@ CHAT_PRICING = os.getenv("TELEGRAM_CHAT_PRICING")
 
 async def send_to_telegram(destination: str, message: str) -> dict:
     """
-    Send message to Telegram chat
+    Send text message to Telegram chat
     
     CRITICAL PRINCIPLE: "What you see is what gets sent"
     - NO emoji additions
@@ -71,12 +73,90 @@ async def send_to_telegram(destination: str, message: str) -> dict:
         # Send message AS IS - NO modifications!
         telegram_message = await bot.send_message(
             chat_id=chat_id,
-            text=message  # EXACTLY as provided!
+            text=message
         )
         
         return {
             "success": True,
             "telegram_message_id": str(telegram_message.message_id),
+            "telegram_chat_id": str(chat_id)
+        }
+    
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+async def send_media_group_to_telegram(destination: str, message: str, images: list) -> dict:
+    """
+    Send message with images as media group (album) to Telegram
+    
+    Images are sent with compression as album
+    Caption is added to the first image
+    
+    Args:
+        destination: 'K23', 'P5', 'problems', 'pricing', etc.
+        message: Text message (will be caption of first image)
+        images: List of base64 encoded images
+    
+    Returns:
+        {
+            "success": bool,
+            "telegram_message_id": str,
+            "telegram_chat_id": str,
+            "error": str (if failed)
+        }
+    """
+    # Determine chat_id
+    if destination == "problems":
+        chat_id = CHAT_PROBLEMS
+    elif destination == "pricing":
+        chat_id = CHAT_PRICING
+    elif destination in MASTER_CHATS:
+        chat_id = MASTER_CHATS[destination]
+    else:
+        return {
+            "success": False,
+            "error": f"Unknown destination: {destination}"
+        }
+    
+    if not chat_id:
+        return {
+            "success": False,
+            "error": f"Chat ID not configured for destination: {destination}"
+        }
+    
+    try:
+        # Convert base64 images to InputMediaPhoto
+        media_group = []
+        
+        for i, img_base64 in enumerate(images):
+            # Remove data URL prefix if present
+            if ',' in img_base64:
+                img_base64 = img_base64.split(',')[1]
+            
+            # Decode base64 to bytes
+            img_bytes = base64.b64decode(img_base64)
+            img_file = io.BytesIO(img_bytes)
+            img_file.name = f'image_{i}.jpg'
+            
+            # First image gets the caption (message text)
+            if i == 0:
+                media_group.append(InputMediaPhoto(media=img_file, caption=message))
+            else:
+                media_group.append(InputMediaPhoto(media=img_file))
+        
+        # Send media group
+        messages = await bot.send_media_group(
+            chat_id=chat_id,
+            media=media_group
+        )
+        
+        # Return first message ID
+        return {
+            "success": True,
+            "telegram_message_id": str(messages[0].message_id),
             "telegram_chat_id": str(chat_id)
         }
     
