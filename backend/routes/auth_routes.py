@@ -20,7 +20,7 @@ async def callback(request: Request):
     """Handle OAuth callback and return JWT token"""
     try:
         print("=== AUTH CALLBACK START ===")
-        token = await oauth.google.authorize_access_token(request)
+        token = await oauth.google.authorize_access_token(request, state=None)
         print(f"Token received: {bool(token)}")
         
         user = token.get('userinfo')
