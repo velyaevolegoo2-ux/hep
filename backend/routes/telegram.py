@@ -2,41 +2,42 @@
 Telegram routes for Hep
 Handles sending messages to masters via Telegram
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import get_db
 from models import TelegramSend
-from services.telegram_service import send_to_telegram, delete_telegram_message
+from services.telegram_service import send_to_telegram, send_media_group_to_telegram, delete_telegram_message
 from datetime import datetime
+from typing import List, Optional
+import base64
 
 router = APIRouter(prefix="/api/telegram", tags=["telegram"])
 
 class SendRequest(BaseModel):
-    order_number: str  # а511
-    destination: str  # 'K23', 'problems', 'pricing'
-    message: str  # FINAL text to send (including order number!)
+    order_number: str
+    destination: str
+    message: str
+    images: Optional[List[str]] = None  # Base64 encoded images
 
 class SendResponse(BaseModel):
     success: bool
     telegram_message_id: str = None
-    send_id: int = None  # ID in our database
+    send_id: int = None
     error: str = None
 
 @router.post("/send", response_model=SendResponse)
 async def send_message(request: SendRequest, db: Session = Depends(get_db)):
     """
-    Send message to Telegram
+    Send message to Telegram with optional images
     
-    CRITICAL PRINCIPLE: "What you see is what gets sent"
-    - Message is sent EXACTLY as provided
-    - NO modifications by this endpoint
-    - Order number should ALREADY be in the message text
+    Images are sent as media group (album) with compression
     
     Args:
         order_number: Order number (for logging)
         destination: 'K23', 'P5', 'problems', 'pricing', etc.
-        message: FINAL text to send
+        message: Text message
+        images: Optional list of base64 encoded images
     
     Returns:
         {
@@ -46,11 +47,20 @@ async def send_message(request: SendRequest, db: Session = Depends(get_db)):
         }
     """
     try:
-        # Send to Telegram (NO modifications!)
-        result = await send_to_telegram(
-            destination=request.destination,
-            message=request.message  # AS IS!
-        )
+        # Send with or without images
+        if request.images and len(request.images) > 0:
+            # Send as media group with images
+            result = await send_media_group_to_telegram(
+                destination=request.destination,
+                message=request.message,
+                images=request.images
+            )
+        else:
+            # Send text only
+            result = await send_to_telegram(
+                destination=request.destination,
+                message=request.message
+            )
         
         if not result["success"]:
             return SendResponse(
