@@ -5,7 +5,7 @@ Simplified version of Hepler without Etsy integration
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
-from routes import orders, translate, telegram
+from routes import orders, translate, telegram, simple_auth
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -34,6 +34,7 @@ app.add_middleware(
 app.include_router(orders.router)
 app.include_router(translate.router)
 app.include_router(telegram.router)
+app.include_router(simple_auth.router)
 
 @app.get("/")
 async def root():
