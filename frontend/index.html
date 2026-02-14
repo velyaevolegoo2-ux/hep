@@ -308,7 +308,7 @@
         </div>
     </div>
 
-  <script>
+ <script>
         // Configuration
         const API_URL = 'https://hep-backend.onrender.com';
         
@@ -318,54 +318,11 @@
         let translateTimeout = null;
         let pendingSends = [];
 
-        // Initialize - check auth first
-        document.addEventListener('DOMContentLoaded', async () => {
-            await checkAuth();
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOrders();
+            setupEventListeners();
         });
-
-        async function checkAuth() {
-            const token = localStorage.getItem('auth_token');
-            
-            if (!token) {
-                // No token - redirect to login
-                window.location.href = `${API_URL}/auth/login`;
-                return;
-            }
-
-            try {
-                // Verify token
-                const response = await fetch(`${API_URL}/auth/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-                
-                if (!data.authenticated) {
-                    // Invalid token - clear and redirect
-                    localStorage.removeItem('auth_token');
-                    window.location.href = `${API_URL}/auth/login`;
-                    return;
-                }
-                
-                // Authenticated - load app
-                console.log('Authenticated as:', data.user.email);
-                loadOrders();
-                setupEventListeners();
-                
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                localStorage.removeItem('auth_token');
-                window.location.href = `${API_URL}/auth/login`;
-            }
-        }
-
-        function getAuthHeaders() {
-            const token = localStorage.getItem('auth_token');
-            return {
-                'Authorization': `Bearer ${token}`
-            };
-        }
 
         function setupEventListeners() {
             // Search
@@ -382,9 +339,7 @@
 
         async function loadOrders() {
             try {
-                const response = await fetch(`${API_URL}/api/orders/`, {
-                    headers: getAuthHeaders()
-                });
+                const response = await fetch(`${API_URL}/api/orders/`);
                 orders = await response.json();
                 renderOrders(orders);
             } catch (error) {
@@ -421,9 +376,7 @@
 
         async function selectOrder(orderNumber) {
             try {
-                const response = await fetch(`${API_URL}/api/orders/${orderNumber}`, {
-                    headers: getAuthHeaders()
-                });
+                const response = await fetch(`${API_URL}/api/orders/${orderNumber}`);
                 currentOrder = await response.json();
                 displayOrderInfo();
             } catch (error) {
@@ -471,10 +424,7 @@
             try {
                 const response = await fetch(`${API_URL}/api/translate/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...getAuthHeaders()
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         text: englishText,
                         direction: 'to_russian',
@@ -562,10 +512,7 @@
             try {
                 const response = await fetch(`${API_URL}/api/telegram/send`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...getAuthHeaders()
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         order_number: currentOrder.order_number,
                         destination: destination,
@@ -618,8 +565,7 @@
 
             try {
                 const response = await fetch(`${API_URL}/api/orders/sync-notion`, {
-                    method: 'POST',
-                    headers: getAuthHeaders()
+                    method: 'POST'
                 });
                 const data = await response.json();
                 
