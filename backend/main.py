@@ -25,7 +25,8 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv('GOOGLE_CLIENT_SECRET'),
     https_only=True,
-    same_site='none'
+    same_site='lax',
+    max_age=86400  # 24 hours
 )
 
 # CORS middleware
