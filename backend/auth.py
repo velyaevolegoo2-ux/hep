@@ -1,11 +1,11 @@
 """
-Google OAuth authentication
+Google OAuth authentication with JWT tokens
 """
 import os
-from fastapi import HTTPException, Request, Response
+import jwt
+from datetime import datetime, timedelta
+from fastapi import HTTPException, Request
 from authlib.integrations.starlette_client import OAuth
-from starlette.middleware.sessions import SessionMiddleware
-from itsdangerous import URLSafeTimedSerializer
 
 # OAuth configuration
 oauth = OAuth()
@@ -17,23 +17,39 @@ oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
-# Session serializer
-serializer = URLSafeTimedSerializer(os.getenv('GOOGLE_CLIENT_SECRET'))
+# JWT configuration
+JWT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')  # Reuse as JWT secret
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_HOURS = 24
 
 # Allowed emails
 ALLOWED_EMAILS = os.getenv('ALLOWED_EMAILS', '').split(',')
 
-def is_authenticated(request: Request) -> bool:
-    """Check if user is authenticated"""
-    token = request.session.get('user')
-    if not token:
-        return False
-    
-    email = token.get('email')
-    return email in ALLOWED_EMAILS
+def create_access_token(email: str, name: str) -> str:
+    """Create JWT token"""
+    expiration = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+    payload = {
+        'email': email,
+        'name': name,
+        'exp': expiration
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_token(token: str) -> dict:
+    """Verify JWT token and return payload"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_current_user(request: Request):
-    """Get current authenticated user or raise exception"""
-    if not is_authenticated(request):
+    """Get current user from Authorization header"""
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return request.session.get('user')
+    
+    token = auth_header.replace('Bearer ', '')
+    return verify_token(token)
