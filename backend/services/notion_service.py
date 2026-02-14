@@ -21,9 +21,9 @@ async def sync_orders_from_notion() -> List[Dict]:
     - "Status" - status (В работе)
     - "Нужен к" - deadline
     - "Дата мастера" - master_date
-    - "Мастер" - master (Person field!)
-    - "Сумма" - sum_total (Number field!)
-    - "Сумма Etsy" - sum_etsy (Number field!)
+    - "Мастер" - master (Multi-select field!)
+    - "Сумма" - sum_total (Formula field!)
+    - "Сумма Etsy" - sum_etsy (Text/Rich text field!)
     - "Теги" - tags
     - "Состав" - composition
     - "Etsy" - etsy_link
@@ -58,9 +58,9 @@ async def sync_orders_from_notion() -> List[Dict]:
                     "status": _get_status(properties.get("Status")),
                     "deadline": _get_date(properties.get("Нужен к")),
                     "master_date": _get_date(properties.get("Дата мастера")),
-             "master": _get_people(properties.get("Мастер")) or _get_rich_text(properties.get("Мастер")) or str(properties.get("Мастер", {}).get("type", "UNKNOWN")),
-                    "sum_total": _get_number(properties.get("Сумма")),
-                    "sum_etsy": _get_number(properties.get("Сумма Etsy")),
+                    "master": _get_multi_select(properties.get("Мастер")),
+                    "sum_total": _get_formula(properties.get("Сумма")),
+                    "sum_etsy": _get_rich_text(properties.get("Сумма Etsy")),
                     "tags": _get_multi_select(properties.get("Теги")),
                     "composition": _get_rich_text(properties.get("Состав")),
                     "etsy_link": _get_url(properties.get("Etsy")),
@@ -129,6 +129,22 @@ def _get_number(prop) -> str:
     number = prop.get("number")
     if number is not None:
         return str(number)
+    return ""
+
+def _get_formula(prop) -> str:
+    """Extract formula result as string"""
+    if not prop or prop.get("type") != "formula":
+        return ""
+    formula = prop.get("formula", {})
+    formula_type = formula.get("type")
+    
+    if formula_type == "number":
+        number = formula.get("number")
+        if number is not None:
+            return str(number)
+    elif formula_type == "string":
+        return formula.get("string", "")
+    
     return ""
 
 def _get_people(prop) -> str:
