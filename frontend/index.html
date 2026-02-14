@@ -457,11 +457,18 @@
                     <textarea id="russianText" class="russian-field" placeholder="Перевод появится здесь автоматически..."></textarea>
                 </div>
 
-                <div class="buttons-row">
-                    <button class="btn-help" onclick="toggleSend('problems', this)">?</button>
-                    <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button>
-                    <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button>
-                </div>
+                <!-- Images preview -->
+<div id="imagesPreview" class="images-preview" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+    <div class="upload-hint">Перетащите картинки сюда, нажмите 📎 или Ctrl+V</div>
+</div>
+
+<div class="buttons-row">
+    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+    <button class="btn-upload" onclick="document.getElementById('fileInput').click()" title="Прикрепить картинки">📎</button>
+    <button class="btn-help" onclick="toggleSend('problems', this)">?</button>
+    <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button>
+    <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button>
+</div>
             </div>
         </div>
     </div>
