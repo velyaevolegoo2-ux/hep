@@ -51,7 +51,7 @@ async def sync_orders_from_notion() -> List[Dict]:
             for page in response.get("results", []):
                 properties = page.get("properties", {})
                 
-                # Parse fields (handle Russian names!)
+                # Parse fields (handle Russian names and correct types!)
                 order = {
                     "notion_page_id": page["id"],
                     "order_number": _get_title(properties.get("Task name")),
@@ -132,13 +132,13 @@ def _get_number(prop) -> str:
     return ""
 
 def _get_people(prop) -> str:
-    """Extract people/person as name"""
+    """Extract people/person field - returns name of first person"""
     if not prop or prop.get("type") != "people":
         return ""
     people = prop.get("people", [])
-    if people:
-        # Get first person's name
-        return people[0].get("name", "")
+    if people and len(people) > 0:
+        person = people[0]
+        return person.get("name", "")
     return ""
 
 def _get_url(prop) -> str:
