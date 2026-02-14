@@ -4,8 +4,11 @@ Simplified version of Hepler without Etsy integration
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from database import Base, engine
-from routes import orders, translate, telegram
+from routes import orders, translate, telegram, auth_routes
+from auth import oauth
+import os
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -15,6 +18,14 @@ app = FastAPI(
     title="Hep API",
     description="Translation and messaging tool for costume workshop",
     version="1.0.0"
+)
+
+# Add session middleware (MUST BE BEFORE CORS!)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv('GOOGLE_CLIENT_SECRET'),
+    https_only=True,
+    same_site='none'
 )
 
 # CORS middleware
@@ -34,6 +45,7 @@ app.add_middleware(
 app.include_router(orders.router)
 app.include_router(translate.router)
 app.include_router(telegram.router)
+app.include_router(auth_routes.router)
 
 @app.get("/")
 async def root():
