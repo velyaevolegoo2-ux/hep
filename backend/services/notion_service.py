@@ -14,7 +14,7 @@ DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 
 async def sync_orders_from_notion() -> List[Dict]:
     """
-    Fetch all orders from Notion database
+    Fetch all orders from Notion database with pagination
     
     IMPORTANT: Notion uses RUSSIAN field names!
     - "Task name" - order number (а511)
@@ -32,30 +32,47 @@ async def sync_orders_from_notion() -> List[Dict]:
         List of order dictionaries
     """
     try:
-        # Query all pages from database
-        response = notion.databases.query(database_id=DATABASE_ID)
-        
         orders = []
-        for page in response.get("results", []):
-            properties = page.get("properties", {})
-            
-            # Parse fields (handle Russian names!)
-            order = {
-                "notion_page_id": page["id"],
-                "order_number": _get_title(properties.get("Task name")),
-                "status": _get_status(properties.get("Status")),
-                "deadline": _get_date(properties.get("Нужен к")),
-                "master_date": _get_date(properties.get("Дата мастера")),
-                "master": _get_rich_text(properties.get("Мастер")),
-                "sum_total": _get_rich_text(properties.get("Сумма")),
-                "sum_etsy": _get_rich_text(properties.get("Сумма етси")),
-                "tags": _get_multi_select(properties.get("Теги")),
-                "composition": _get_rich_text(properties.get("Состав")),
-                "etsy_link": _get_url(properties.get("Etsy")),
-            }
-            
-            orders.append(order)
+        has_more = True
+        start_cursor = None
         
+        # Paginate through all results
+        while has_more:
+            # Query database with cursor
+            if start_cursor:
+                response = notion.databases.query(
+                    database_id=DATABASE_ID,
+                    start_cursor=start_cursor
+                )
+            else:
+                response = notion.databases.query(database_id=DATABASE_ID)
+            
+            # Process this page of results
+            for page in response.get("results", []):
+                properties = page.get("properties", {})
+                
+                # Parse fields (handle Russian names!)
+                order = {
+                    "notion_page_id": page["id"],
+                    "order_number": _get_title(properties.get("Task name")),
+                    "status": _get_status(properties.get("Status")),
+                    "deadline": _get_date(properties.get("Нужен к")),
+                    "master_date": _get_date(properties.get("Дата мастера")),
+                    "master": _get_rich_text(properties.get("Мастер")),
+                    "sum_total": _get_rich_text(properties.get("Сумма")),
+                    "sum_etsy": _get_rich_text(properties.get("Сумма етси")),
+                    "tags": _get_multi_select(properties.get("Теги")),
+                    "composition": _get_rich_text(properties.get("Состав")),
+                    "etsy_link": _get_url(properties.get("Etsy")),
+                }
+                
+                orders.append(order)
+            
+            # Check if there are more pages
+            has_more = response.get("has_more", False)
+            start_cursor = response.get("next_cursor")
+        
+        print(f"✓ Fetched {len(orders)} orders from Notion")
         return orders
     
     except Exception as e:
