@@ -21,9 +21,9 @@ async def sync_orders_from_notion() -> List[Dict]:
     - "Status" - status (В работе)
     - "Нужен к" - deadline
     - "Дата мастера" - master_date
-    - "Мастер" - master (К23 Ольга)
-    - "Сумма" - sum_total
-    - "Сумма етси" - sum_etsy  
+    - "Мастер" - master (Person field!)
+    - "Сумма" - sum_total (Number field!)
+    - "Сумма Etsy" - sum_etsy (Number field!)
     - "Теги" - tags
     - "Состав" - composition
     - "Etsy" - etsy_link
@@ -58,9 +58,9 @@ async def sync_orders_from_notion() -> List[Dict]:
                     "status": _get_status(properties.get("Status")),
                     "deadline": _get_date(properties.get("Нужен к")),
                     "master_date": _get_date(properties.get("Дата мастера")),
-                    "master": _get_rich_text(properties.get("Мастер")),
-                    "sum_total": _get_rich_text(properties.get("Сумма")),
-                    "sum_etsy": _get_rich_text(properties.get("Сумма етси")),
+                    "master": _get_people(properties.get("Мастер")),
+                    "sum_total": _get_number(properties.get("Сумма")),
+                    "sum_etsy": _get_number(properties.get("Сумма Etsy")),
                     "tags": _get_multi_select(properties.get("Теги")),
                     "composition": _get_rich_text(properties.get("Состав")),
                     "etsy_link": _get_url(properties.get("Etsy")),
@@ -121,6 +121,25 @@ def _get_multi_select(prop) -> str:
         return ""
     tags = prop.get("multi_select", [])
     return ", ".join([tag.get("name", "") for tag in tags])
+
+def _get_number(prop) -> str:
+    """Extract number as string"""
+    if not prop or prop.get("type") != "number":
+        return ""
+    number = prop.get("number")
+    if number is not None:
+        return str(number)
+    return ""
+
+def _get_people(prop) -> str:
+    """Extract people/person as name"""
+    if not prop or prop.get("type") != "people":
+        return ""
+    people = prop.get("people", [])
+    if people:
+        # Get first person's name
+        return people[0].get("name", "")
+    return ""
 
 def _get_url(prop) -> str:
     """Extract URL"""
