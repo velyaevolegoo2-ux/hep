@@ -568,26 +568,47 @@ textarea.drag-over {
         }
 
         function handlePaste(e) {
-            const items = e.clipboardData?.items;
-            if (!items) return;
-            
-            for (let item of items) {
-                if (item.type.indexOf('image') !== -1) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    addImageFile(file);
-                }
-            }
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    let imagesToAdd = 0;
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            imagesToAdd++;
         }
+    }
+    
+    const availableSlots = 10 - attachedImages.length;
+    if (imagesToAdd > availableSlots) {
+        alert(`Можно добавить ещё только ${availableSlots} картинок (максимум 10 всего)`);
+        e.preventDefault();
+        return;
+    }
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            addImageFile(file);
+        }
+    }
+}
 
         function handleFileSelect(e) {
-            const files = e.target.files;
-            for (let file of files) {
-                addImageFile(file);
-            }
-            // Reset input
-            e.target.value = '';
-        }
+    const files = Array.from(e.target.files);
+    const availableSlots = 10 - attachedImages.length;
+    
+    if (files.length > availableSlots) {
+        alert(`Можно добавить ещё только ${availableSlots} картинок (максимум 10 всего)`);
+        e.target.value = '';
+        return;
+    }
+    
+    for (let file of files) {
+        addImageFile(file);
+    }
+    e.target.value = '';
+}
 
         function handleDragOver(e) {
             e.preventDefault();
@@ -602,17 +623,23 @@ textarea.drag-over {
         }
 
         function handleDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.classList.remove('drag-over');
-            
-            const files = e.dataTransfer.files;
-            for (let file of files) {
-                if (file.type.indexOf('image') !== -1) {
-                    addImageFile(file);
-                }
-            }
-        }
+    e.preventDefault();
+    e.stopPropagation();
+    e.target.classList.remove('drag-over');
+    
+    const files = e.dataTransfer.files;
+    const imageFiles = Array.from(files).filter(f => f.type.indexOf('image') !== -1);
+    const availableSlots = 10 - attachedImages.length;
+    
+    if (imageFiles.length > availableSlots) {
+        alert(`Можно добавить ещё только ${availableSlots} картинок (максимум 10 всего)`);
+        return;
+    }
+    
+    for (let file of imageFiles) {
+        addImageFile(file);
+    }
+}
 
         function addImageFile(file) {
     const reader = new FileReader();
