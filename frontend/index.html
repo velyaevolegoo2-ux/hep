@@ -324,34 +324,19 @@
             margin-top: 12px;
             display: none;
         }
-        /* Images preview */
-.images-preview {
+ /* Images preview - compact */
+.images-container {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     flex-wrap: wrap;
-    margin-top: 12px;
-    min-height: 40px;
-    padding: 8px;
-    border: 2px dashed #e8e3db;
-    border-radius: 6px;
-    background: #fafafa;
-}
-
-.images-preview.drag-over {
-    border-color: #4caf50;
-    background: #f0f8f0;
-}
-
-.images-preview.has-images {
-    border-style: solid;
-    background: white;
+    margin-top: 8px;
 }
 
 .image-item {
     position: relative;
-    width: 80px;
-    height: 80px;
-    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    border-radius: 3px;
     overflow: hidden;
     border: 1px solid #e8e3db;
 }
@@ -364,16 +349,16 @@
 
 .image-remove {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
+    top: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
     background: rgba(0,0,0,0.7);
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 10px;
     line-height: 1;
     padding: 0;
     display: flex;
@@ -385,12 +370,38 @@
     background: rgba(239,83,80,0.9);
 }
 
-.upload-hint {
-    width: 100%;
-    text-align: center;
-    color: #999;
-    font-size: 12px;
-    padding: 12px;
+/* Upload button inside textarea */
+.translate-section {
+    position: relative;
+}
+
+.btn-upload-inline {
+    position: absolute;
+    bottom: 28px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.translate-section:hover .btn-upload-inline {
+    opacity: 0.4;
+}
+
+.btn-upload-inline:hover {
+    opacity: 1 !important;
+}
+
+textarea.drag-over {
+    border-color: #4caf50;
+    background: #f0f8f0;
 }
 
 .btn-upload {
@@ -448,23 +459,21 @@
                 </div>
 
                 <div class="translate-section">
-                    <div class="translate-label">Оригинал</div>
-                    <textarea id="englishText" placeholder="Вставьте текст от клиента на английском..."></textarea>
-                </div>
-
-                <div class="translate-section">
-                    <div class="translate-label">Перевод</div>
-                    <textarea id="russianText" class="russian-field" placeholder="Перевод появится здесь автоматически..."></textarea>
-                </div>
-
-                <!-- Images preview -->
-<div id="imagesPreview" class="images-preview" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-    <div class="upload-hint">Перетащите картинки сюда, нажмите 📎 или Ctrl+V</div>
+    <div class="translate-label">Перевод</div>
+    <textarea 
+        id="russianText" 
+        class="russian-field" 
+        placeholder="Перевод появится здесь автоматически..."
+        ondrop="handleDrop(event)" 
+        ondragover="handleDragOver(event)" 
+        ondragleave="handleDragLeave(event)">
+    </textarea>
+    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+    <button class="btn-upload-inline" onclick="document.getElementById('fileInput').click()" title="Прикрепить (📎 / Ctrl+V / перетащить)">📎</button>
+    <div id="imagesContainer" class="images-container"></div>
 </div>
 
 <div class="buttons-row">
-    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
-    <button class="btn-upload" onclick="document.getElementById('fileInput').click()" title="Прикрепить картинки">📎</button>
     <button class="btn-help" onclick="toggleSend('problems', this)">?</button>
     <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button>
     <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button>
