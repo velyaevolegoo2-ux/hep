@@ -709,17 +709,26 @@
         }
 
         function renderOrders(ordersToRender) {
-            const sorted = [...ordersToRender].sort((a, b) => {
-                return b.order_number.localeCompare(a.order_number, 'ru');
-            });
-            
-            const container = document.getElementById('ordersList');
-            container.innerHTML = sorted.map(order => `
-                <div class="order-item" data-order="${order.order_number}" onclick="selectOrder('${order.order_number}', event)">
-                    ${order.order_number}
-                </div>
-            `).join('');
-        }
+    // Filter out completed, cancelled, returned orders
+    const filtered = ordersToRender.filter(order => {
+        const status = order.status?.toLowerCase() || '';
+        return status !== 'выполнен' && 
+               status !== 'отменен' && 
+               status !== 'возврат';
+    });
+    
+    // Sort by order_number descending
+    const sorted = [...filtered].sort((a, b) => {
+        return b.order_number.localeCompare(a.order_number, 'ru');
+    });
+    
+    const container = document.getElementById('ordersList');
+    container.innerHTML = sorted.map(order => `
+        <div class="order-item" data-order="${order.order_number}" onclick="selectOrder('${order.order_number}', event)">
+            ${order.order_number}
+        </div>
+    `).join('');
+}
 
         function filterOrders(search) {
             if (!search) {
