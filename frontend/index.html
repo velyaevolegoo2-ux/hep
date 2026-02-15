@@ -761,17 +761,17 @@ textarea.drag-over {
             body: JSON.stringify({
                 text: englishText,
                 direction: 'to_russian',
-                order_number: currentOrder.order_number
+                order_number: currentOrder ? currentOrder.order_number : 'unknown'
             })
         });
         
         const data = await response.json();
-// Add order number only if order is selected
-if (currentOrder) {
-    document.getElementById('russianText').value = `${currentOrder.order_number}\n${data.translation}`;
-} else {
-    document.getElementById('russianText').value = data.translation;
-}
+        // Add order number only if order is selected
+        if (currentOrder) {
+            document.getElementById('russianText').value = `${currentOrder.order_number}\n${data.translation}`;
+        } else {
+            document.getElementById('russianText').value = data.translation;
+        }
     } catch (error) {
         console.error('Translation failed:', error);
     }
