@@ -483,6 +483,7 @@
         let translateTimeout = null;
         let pendingSends = [];
         let authToken = null;
+        let attachedImages = []; // Array of base64 images
 
         // Initialize - check if already logged in
         document.addEventListener('DOMContentLoaded', () => {
@@ -525,12 +526,13 @@
             }
         }
 
-        function showMainApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            loadOrders();
-            setupEventListeners();
-        }
+       function showMainApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    loadOrders();
+    setupEventListeners();
+    setupImageHandlers();
+}
 
         function setupEventListeners() {
             // Search
@@ -716,17 +718,18 @@
             });
         }
 
-        async function sendMessage(destination, message) {
-            try {
-                const response = await fetch(`${API_URL}/api/telegram/send`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        order_number: currentOrder.order_number,
-                        destination: destination,
-                        message: message
-                    })
-                });
+       async function sendMessage(destination, message) {
+    try {
+        const response = await fetch(`${API_URL}/api/telegram/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                order_number: currentOrder.order_number,
+                destination: destination,
+                message: message,
+                images: attachedImages.length > 0 ? attachedImages : null
+            })
+        });
 
                 const data = await response.json();
                 
@@ -756,9 +759,11 @@
         }
 
         function clearFields() {
-            document.getElementById('englishText').value = '';
-            document.getElementById('russianText').value = '';
-        }
+    document.getElementById('englishText').value = '';
+    document.getElementById('russianText').value = '';
+    attachedImages = [];
+    renderImages();
+}
 
         async function syncNotion() {
             const button = document.querySelector('.sync-button');
@@ -808,6 +813,89 @@
                 }, 2000);
             }
         }
+        // Image handling functions
+function setupImageHandlers() {
+    // Paste from clipboard
+    document.addEventListener('paste', handlePaste);
+}
+
+function handlePaste(e) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            addImageFile(file);
+        }
+    }
+}
+
+function handleFileSelect(e) {
+    const files = e.target.files;
+    for (let file of files) {
+        addImageFile(file);
+    }
+    // Reset input
+    e.target.value = '';
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('imagesPreview').classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('imagesPreview').classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('imagesPreview').classList.remove('drag-over');
+    
+    const files = e.dataTransfer.files;
+    for (let file of files) {
+        if (file.type.indexOf('image') !== -1) {
+            addImageFile(file);
+        }
+    }
+}
+
+function addImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        attachedImages.push(e.target.result);
+        renderImages();
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage(index) {
+    attachedImages.splice(index, 1);
+    renderImages();
+}
+
+function renderImages() {
+    const container = document.getElementById('imagesPreview');
+    
+    if (attachedImages.length === 0) {
+        container.innerHTML = '<div class="upload-hint">Перетащите картинки сюда, нажмите 📎 или Ctrl+V</div>';
+        container.classList.remove('has-images');
+    } else {
+        container.classList.add('has-images');
+        container.innerHTML = attachedImages.map((img, index) => `
+            <div class="image-item">
+                <img src="${img}" alt="Image ${index + 1}">
+                <button class="image-remove" onclick="removeImage(${index})">×</button>
+            </div>
+        `).join('');
+    }
+}
     </script>
 </body>
 </html>
