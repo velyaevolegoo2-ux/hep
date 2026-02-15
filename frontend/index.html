@@ -752,7 +752,7 @@ textarea.drag-over {
 
         async function autoTranslate() {
     const englishText = document.getElementById('englishText').value.trim();
-    if (!englishText || !currentOrder) return;
+    if (!englishText) return;
 
     try {
         const response = await fetch(`${API_URL}/api/translate/`, {
@@ -766,8 +766,12 @@ textarea.drag-over {
         });
         
         const data = await response.json();
-        // Add order number BEFORE translation in the result
-        document.getElementById('russianText').value = `${currentOrder.order_number}\n${data.translation}`;
+// Add order number only if order is selected
+if (currentOrder) {
+    document.getElementById('russianText').value = `${currentOrder.order_number}\n${data.translation}`;
+} else {
+    document.getElementById('russianText').value = data.translation;
+}
     } catch (error) {
         console.error('Translation failed:', error);
     }
