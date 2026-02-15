@@ -821,31 +821,31 @@ textarea.drag-over {
         }
 
         async function sendMessage(destination, message) {
-            try {
-                const response = await fetch(`${API_URL}/api/telegram/send`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({
-    order_number: currentOrder.order_number,
-    destination: destination,
-    message: message,
-    images: attachedImages.length > 0 ? attachedImages : null
-})
-                });
+    try {
+        const response = await fetch(`${API_URL}/api/telegram/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                order_number: currentOrder.order_number,
+                destination: destination,
+                message: message,
+                images: attachedImages.length > 0 ? attachedImages : null
+            })
+        });
 
-                const data = await response.json();
-                
-                if (data.success) {
-                    console.log(`✓ Sent to ${destination}`);
-                    // Clear fields after successful send
-                    clearFields();
-                } else {
-                    console.error(`Error: ${data.error}`);
-                }
-            } catch (error) {
-                console.error('Send failed:', error);
-            }
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log(`✓ Sent to ${destination}`);
+            // Clear fields after successful send
+            clearFields();
+        } else {
+            console.error(`Error: ${data.error}`);
         }
+    } catch (error) {
+        console.error('Send failed:', error);
+    }
+}
 
         function restoreButton(button, type) {
             if (!button) return;
