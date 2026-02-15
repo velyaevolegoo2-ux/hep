@@ -537,25 +537,31 @@
         }
 
         function setupEventListeners() {
-            // Search
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                filterOrders(e.target.value);
-            });
+    // Search
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        filterOrders(e.target.value);
+    });
 
-            // Auto-translate with auto-resize
-            const englishText = document.getElementById('englishText');
-            const russianText = document.getElementById('russianText');
-            
-            englishText.addEventListener('input', function() {
-                autoResizeTextarea(this);
-                clearTimeout(translateTimeout);
-                translateTimeout = setTimeout(autoTranslate, 1000);
-            });
+    // Auto-translate with auto-resize
+    const englishText = document.getElementById('englishText');
+    const russianText = document.getElementById('russianText');
+    
+    englishText.addEventListener('input', function() {
+        autoResizeTextarea(this);
+        clearTimeout(translateTimeout);
+        translateTimeout = setTimeout(autoTranslate, 1000);
+    });
 
-            russianText.addEventListener('input', function() {
-                autoResizeTextarea(this);
-            });
-        }
+    russianText.addEventListener('input', function() {
+        autoResizeTextarea(this);
+    });
+
+    // Resize on window resize
+    window.addEventListener('resize', () => {
+        autoResizeTextarea(englishText);
+        autoResizeTextarea(russianText);
+    });
+}
 
         function autoResizeTextarea(textarea) {
     // Reset to minimum height
