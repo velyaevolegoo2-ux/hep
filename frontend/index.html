@@ -828,7 +828,7 @@ textarea.drag-over {
                    body: JSON.stringify({
     order_number: currentOrder.order_number,
     destination: destination,
-    message: `${currentOrder.order_number}\n${message}`,
+    message: message,
     images: attachedImages.length > 0 ? attachedImages : null
 })
                 });
