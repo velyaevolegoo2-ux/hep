@@ -852,7 +852,7 @@ textarea.drag-over {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                order_number: currentOrder.order_number,
+                order_number: currentOrder ? currentOrder.order_number : 'unknown',
                 destination: destination,
                 message: message,
                 images: attachedImages.length > 0 ? attachedImages : null
