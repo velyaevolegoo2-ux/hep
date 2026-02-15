@@ -717,8 +717,16 @@ textarea.drag-over {
         // Highlight selected order
         document.querySelectorAll('.order-item').forEach(item => {
             item.style.background = '';
+            item.style.borderLeft = '';
         });
-        event.target.style.background = '#d4f4dd';
+        
+        // Find and highlight the clicked item
+        const selectedItem = Array.from(document.querySelectorAll('.order-item')).find(
+            item => item.textContent.trim() === orderNumber
+        );
+        if (selectedItem) {
+            selectedItem.style.background = '#f0e8d8';
+        }
     } catch (error) {
         console.error('Failed to load order:', error);
     }
