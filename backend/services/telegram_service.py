@@ -92,12 +92,13 @@ async def send_media_group_to_telegram(destination: str, message: str, images: l
     """
     Send message with images as media group (album) to Telegram
     
+    If more than 10 images - splits into multiple albums with same caption
     Images are sent with compression as album
-    Caption is added to the first image
+    Caption is added to the first image of each album
     
     Args:
         destination: 'K23', 'P5', 'problems', 'pricing', etc.
-        message: Text message (will be caption of first image)
+        message: Text message (will be caption of first image in each album)
         images: List of base64 encoded images
     
     Returns:
@@ -128,35 +129,50 @@ async def send_media_group_to_telegram(destination: str, message: str, images: l
         }
     
     try:
-        # Convert base64 images to InputMediaPhoto
-        media_group = []
+        # Split images into chunks of 10 (Telegram limit)
+        chunk_size = 10
+        image_chunks = [images[i:i + chunk_size] for i in range(0, len(images), chunk_size)]
         
-        for i, img_base64 in enumerate(images):
-            # Remove data URL prefix if present
-            if ',' in img_base64:
-                img_base64 = img_base64.split(',')[1]
-            
-            # Decode base64 to bytes
-            img_bytes = base64.b64decode(img_base64)
-            img_file = io.BytesIO(img_bytes)
-            img_file.name = f'image_{i}.jpg'
-            
-            # First image gets the caption (message text)
-            if i == 0:
-                media_group.append(InputMediaPhoto(media=img_file, caption=message))
-            else:
-                media_group.append(InputMediaPhoto(media=img_file))
+        first_message_id = None
         
-        # Send media group
-        messages = await bot.send_media_group(
-            chat_id=chat_id,
-            media=media_group
-        )
+        # Send each chunk as separate media group
+        for chunk_index, chunk in enumerate(image_chunks):
+            media_group = []
+            
+            for i, img_base64 in enumerate(chunk):
+                # Remove data URL prefix if present
+                if ',' in img_base64:
+                    img_base64 = img_base64.split(',')[1]
+                
+                # Decode base64 to bytes
+                img_bytes = base64.b64decode(img_base64)
+                img_file = io.BytesIO(img_bytes)
+                img_file.name = f'image_{chunk_index}_{i}.jpg'
+                
+                # First image of each chunk gets the caption
+                if i == 0:
+                    # Add chunk number if multiple chunks
+                    caption = message
+                    if len(image_chunks) > 1:
+                        caption = f"{message}\n\n[{chunk_index + 1}/{len(image_chunks)}]"
+                    media_group.append(InputMediaPhoto(media=img_file, caption=caption))
+                else:
+                    media_group.append(InputMediaPhoto(media=img_file))
+            
+            # Send media group
+            messages = await bot.send_media_group(
+                chat_id=chat_id,
+                media=media_group
+            )
+            
+            # Save first message ID
+            if first_message_id is None:
+                first_message_id = str(messages[0].message_id)
         
         # Return first message ID
         return {
             "success": True,
-            "telegram_message_id": str(messages[0].message_id),
+            "telegram_message_id": first_message_id,
             "telegram_chat_id": str(chat_id)
         }
     
