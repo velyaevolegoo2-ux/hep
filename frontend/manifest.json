@@ -1,6 +1,6 @@
 {
-  "name": "Hep - Переводчик для мастеров",
-  "short_name": "Hep",
+  "name": "hep",
+  "short_name": "hep",
   "description": "Инструмент для перевода и отправки сообщений мастерам",
   "start_url": "/",
   "display": "standalone",
