@@ -775,9 +775,15 @@ textarea.drag-over {
             return match ? match[0] : null;
         }
 
-        async function autoTranslate() {
+       async function autoTranslate() {
     const englishText = document.getElementById('englishText').value.trim();
     if (!englishText) return;
+
+    const russianField = document.getElementById('russianText');
+    
+    // Show thinking indicator
+    russianField.value = '⏳';
+    russianField.style.color = '#999';
 
     try {
         const response = await fetch(`${API_URL}/api/translate/`, {
@@ -791,14 +797,19 @@ textarea.drag-over {
         });
         
         const data = await response.json();
-        // Add order number only if order is selected
+        
+        // Reset color and show translation
+        russianField.style.color = '';
+        
         if (currentOrder) {
-            document.getElementById('russianText').value = `${currentOrder.order_number}\n${data.translation}`;
+            russianField.value = `${currentOrder.order_number}\n${data.translation}`;
         } else {
-            document.getElementById('russianText').value = data.translation;
+            russianField.value = data.translation;
         }
     } catch (error) {
         console.error('Translation failed:', error);
+        russianField.style.color = '';
+        russianField.value = 'Ошибка перевода';
     }
 }
 
@@ -966,11 +977,15 @@ textarea.drag-over {
                 }, 2000);
             }
         }
-        function deselectOrder() {
+       function deselectOrder() {
     currentOrder = null;
     document.getElementById('orderNumber').textContent = 'Выберите заказ';
     document.getElementById('orderMeta').innerHTML = '';
     document.getElementById('sendButton').textContent = '➤ Отправить';
+    
+    // Clear text fields
+    document.getElementById('englishText').value = '';
+    document.getElementById('russianText').value = '';
     
     // Clear active selection visual
     document.querySelectorAll('.order-item').forEach(item => {
