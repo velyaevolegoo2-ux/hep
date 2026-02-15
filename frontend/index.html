@@ -437,12 +437,13 @@ textarea.drag-over {
         <div class="container">
             <!-- LEFT COLUMN -->
             <div class="orders-column">
-                <div class="orders-header">Заказы</div>
-                <div class="orders-search">
-                    <input type="text" id="searchInput" placeholder="">
-                </div>
-                <button class="sync-button" onclick="syncNotion()">Sync</button>
-                <div class="orders-list" id="ordersList">
+    <div class="orders-header">Заказы</div>
+    <div class="orders-search">
+        <input type="text" id="searchInput" placeholder="">
+    </div>
+    <button class="sync-button" onclick="syncNotion()">Sync</button>
+    <button class="sync-button" style="background: #9e9e9e; margin-top: 0;" onclick="deselectOrder()">×</button>
+    <div class="orders-list" id="ordersList">
                     <!-- Orders will be loaded here -->
                 </div>
             </div>
@@ -708,14 +709,20 @@ textarea.drag-over {
         }
 
         async function selectOrder(orderNumber) {
-            try {
-                const response = await fetch(`${API_URL}/api/orders/${orderNumber}`);
-                currentOrder = await response.json();
-                displayOrderInfo();
-            } catch (error) {
-                console.error('Failed to load order:', error);
-            }
-        }
+    try {
+        const response = await fetch(`${API_URL}/api/orders/${orderNumber}`);
+        currentOrder = await response.json();
+        displayOrderInfo();
+        
+        // Highlight selected order
+        document.querySelectorAll('.order-item').forEach(item => {
+            item.style.background = '';
+        });
+        event.target.style.background = '#f0e8d8';
+    } catch (error) {
+        console.error('Failed to load order:', error);
+    }
+}
 
         function displayOrderInfo() {
             if (!currentOrder) return;
@@ -941,6 +948,17 @@ textarea.drag-over {
                 }, 2000);
             }
         }
+        function deselectOrder() {
+    currentOrder = null;
+    document.getElementById('orderNumber').textContent = 'Выберите заказ';
+    document.getElementById('orderMeta').innerHTML = '';
+    document.getElementById('sendButton').textContent = '➤ Отправить';
+    
+    // Clear active selection visual
+    document.querySelectorAll('.order-item').forEach(item => {
+        item.style.background = '';
+    });
+}
     </script>
 </body>
 </html>
