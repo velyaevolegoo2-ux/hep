@@ -615,11 +615,6 @@ textarea.drag-over {
         }
 
         function addImageFile(file) {
-    if (attachedImages.length >= 10) {
-        alert('Максимум 10 картинок');
-        return;
-    }
-    
     const reader = new FileReader();
     reader.onload = (e) => {
         attachedImages.push(e.target.result);
