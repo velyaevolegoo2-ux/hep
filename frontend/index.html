@@ -558,10 +558,31 @@
         }
 
         function autoResizeTextarea(textarea) {
-            textarea.style.height = '150px';
-            const newHeight = Math.min(textarea.scrollHeight, window.innerHeight * 0.6);
-            textarea.style.height = newHeight + 'px';
-        }
+    // Reset to minimum height
+    textarea.style.height = '150px';
+    
+    // Get all fixed elements heights
+    const orderInfo = document.querySelector('.order-info')?.offsetHeight || 0;
+    const labels = 50; // Approximate height of both labels
+    const buttonsRow = document.querySelector('.buttons-row')?.offsetHeight || 60;
+    const imagesContainer = document.getElementById('imagesContainer')?.offsetHeight || 0;
+    const padding = 100; // Extra padding for safety
+    
+    // Calculate available space for BOTH textareas
+    const availableHeight = window.innerHeight - orderInfo - labels - buttonsRow - imagesContainer - padding;
+    
+    // Each textarea gets half of available space (minus small gap between them)
+    const maxHeightPerTextarea = (availableHeight / 2) - 20;
+    
+    // Grow up to max, then stop and show scrollbar
+    if (textarea.scrollHeight <= maxHeightPerTextarea) {
+        textarea.style.height = Math.max(150, textarea.scrollHeight) + 'px';
+        textarea.style.overflowY = 'hidden';
+    } else {
+        textarea.style.height = Math.max(150, maxHeightPerTextarea) + 'px';
+        textarea.style.overflowY = 'auto';
+    }
+}
 
         // Image handling functions
         function setupImageHandlers() {
