@@ -729,26 +729,27 @@ textarea.drag-over {
         }
 
         async function autoTranslate() {
-            const englishText = document.getElementById('englishText').value.trim();
-            if (!englishText || !currentOrder) return;
+    const englishText = document.getElementById('englishText').value.trim();
+    if (!englishText || !currentOrder) return;
 
-            try {
-                const response = await fetch(`${API_URL}/api/translate/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: englishText,
-                        direction: 'to_russian',
-                        order_number: currentOrder.order_number
-                    })
-                });
-                
-                const data = await response.json();
-                document.getElementById('russianText').value = data.translation;
-            } catch (error) {
-                console.error('Translation failed:', error);
-            }
-        }
+    try {
+        const response = await fetch(`${API_URL}/api/translate/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: englishText,
+                direction: 'to_russian',
+                order_number: currentOrder.order_number
+            })
+        });
+        
+        const data = await response.json();
+        // Add order number BEFORE translation in the result
+        document.getElementById('russianText').value = `${currentOrder.order_number}\n${data.translation}`;
+    } catch (error) {
+        console.error('Translation failed:', error);
+    }
+}
 
         function toggleSend(type, button) {
             // Check if this button already has a countdown
