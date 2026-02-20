@@ -195,12 +195,13 @@
         }
 
         .buttons-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            align-items: center;
-            flex-shrink: 0;
-        }
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    align-items: center;
+    flex-shrink: 0;
+    justify-content: center;
+}
 
         .btn-send {
             margin-left: auto;
@@ -256,7 +257,18 @@
         .btn-send:hover {
             background: #000;
         }
+.btn-delo {
+    background: #222;
+    color: white;
+    padding: 12px 24px;
+    white-space: nowrap;
+    font-size: 14px;
+    margin: 0 auto;
+}
 
+.btn-delo:hover {
+    background: #000;
+}
         .loading {
             opacity: 0.5;
             pointer-events: none;
@@ -473,11 +485,12 @@
                     <div id="imagesContainer" class="images-container"></div>
                 </div>
 
-                <div class="buttons-row">
-                    <button class="btn-help" onclick="toggleSend('problems', this)">?</button>
-                    <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button>
-                    <!-- <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button> -->
-                </div>
+               <div class="buttons-row">
+    <!-- <button class="btn-help" onclick="toggleSend('problems', this)">?</button> -->
+    <!-- <button class="btn-pricing" onclick="toggleSend('pricing', this)">💰</button> -->
+    <button class="btn-delo" onclick="toggleSend('delo', this)">Дело</button>
+    <!-- <button class="btn-send" id="sendButton" onclick="toggleSend('master', this)">➤ Отправить</button> -->
+</div>
             </div>
         </div>
     </div>
