@@ -26,6 +26,7 @@ MASTER_CHATS = {
 # Special chats
 CHAT_PROBLEMS = os.getenv("TELEGRAM_CHAT_PROBLEMS")
 CHAT_PRICING = os.getenv("TELEGRAM_CHAT_PRICING")
+CHAT_DELO = os.getenv("TELEGRAM_CHAT_DELO")
 
 async def send_to_telegram(destination: str, message: str) -> dict:
     """
@@ -51,12 +52,14 @@ async def send_to_telegram(destination: str, message: str) -> dict:
         }
     """
     # Determine chat_id
-    if destination == "problems":
-        chat_id = CHAT_PROBLEMS
-    elif destination == "pricing":
-        chat_id = CHAT_PRICING
-    elif destination in MASTER_CHATS:
-        chat_id = MASTER_CHATS[destination]
+   if destination == "problems":
+    chat_id = CHAT_PROBLEMS
+elif destination == "pricing":
+    chat_id = CHAT_PRICING
+elif destination == "delo":
+    chat_id = CHAT_DELO
+elif destination in MASTER_CHATS:
+    chat_id = MASTER_CHATS[destination]
     else:
         return {
             "success": False,
@@ -110,12 +113,14 @@ async def send_media_group_to_telegram(destination: str, message: str, images: l
         }
     """
     # Determine chat_id
-    if destination == "problems":
-        chat_id = CHAT_PROBLEMS
-    elif destination == "pricing":
-        chat_id = CHAT_PRICING
-    elif destination in MASTER_CHATS:
-        chat_id = MASTER_CHATS[destination]
+   if destination == "problems":
+    chat_id = CHAT_PROBLEMS
+elif destination == "pricing":
+    chat_id = CHAT_PRICING
+elif destination == "delo":
+    chat_id = CHAT_DELO
+elif destination in MASTER_CHATS:
+    chat_id = MASTER_CHATS[destination]
     else:
         return {
             "success": False,
