@@ -31,11 +31,11 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(orders.router)
-app.include_router(translate.router)
-app.include_router(telegram.router)
-app.include_router(simple_auth.router)
-app.include_router(rephrase.router)
+app.include_router(orders.router, prefix="/api")
+app.include_router(translate.router, prefix="/api")
+app.include_router(telegram.router, prefix="/api")
+app.include_router(simple_auth.router, prefix="/api/auth")
+app.include_router(rephrase.router, prefix="/api")
 
 @app.get("/")
 async def root():
