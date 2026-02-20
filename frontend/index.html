@@ -807,10 +807,10 @@
             return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
         }
 
-      function extractMasterCode(masterStr) {
+     function extractMasterCode(masterStr) {
     if (!masterStr) return null;
-    // Match master code: letters and numbers before first space
-    const match = masterStr.match(/^([A-Z]+\d+)/i);
+    // Match master code: Latin OR Cyrillic letters + numbers before first space
+    const match = masterStr.match(/^([A-ZА-Я]+\d+)/i);
     return match ? match[1] : null;
 }
        async function autoTranslate() {
