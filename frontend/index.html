@@ -873,54 +873,52 @@
         }
 
         function startCountdown(type, button) {
-            if (!currentOrder) {
-                alert('Выберите заказ');
-                return;
-            }
-
-            const message = document.getElementById('russianText').value.trim();
-            if (!message) {
-                alert('Введите текст для отправки');
-                return;
-            }
-
-            let destination;
-            if (type === 'problems') {
-                destination = 'problems';
-            } else if (type === 'pricing') {
-                destination = 'pricing';
-            } else if (type === 'master') {
-                destination = extractMasterCode(currentOrder.master);
-                if (!destination) {
-                    alert('Мастер не назначен');
-                    return;
-                }
-            }
-
-            const sendId = Date.now();
-            let timeLeft = 10;
-            button.textContent = timeLeft;
-            
-            const countdown = setInterval(() => {
-                timeLeft--;
-                if (timeLeft > 0) {
-                    button.textContent = timeLeft;
-                } else {
-                    clearInterval(countdown);
-                    sendMessage(destination, message);
-                    restoreButton(button, type);
-                    pendingSends = pendingSends.filter(s => s.id !== sendId);
-                }
-            }, 1000);
-
-            pendingSends.push({
-                id: sendId,
-                type: type,
-                destination: destination,
-                button: button,
-                countdown: countdown
-            });
+    if (!currentOrder) {
+        alert('Выберите заказ');
+        return;
+    }
+    const message = document.getElementById('russianText').value.trim();
+    if (!message) {
+        alert('Введите текст для отправки');
+        return;
+    }
+    let destination;
+    if (type === 'problems') {
+        destination = 'problems';
+    } else if (type === 'pricing') {
+        destination = 'pricing';
+    } else if (type === 'delo') {
+        destination = 'delo';
+    } else if (type === 'master') {
+        destination = extractMasterCode(currentOrder.master);
+        if (!destination) {
+            alert('Мастер не назначен');
+            return;
         }
+    }
+    const sendId = Date.now();
+    let timeLeft = 10;
+    button.textContent = timeLeft;
+    
+    const countdown = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+            button.textContent = timeLeft;
+        } else {
+            clearInterval(countdown);
+            sendMessage(destination, message);
+            restoreButton(button, type);
+            pendingSends = pendingSends.filter(s => s.id !== sendId);
+        }
+    }, 1000);
+    pendingSends.push({
+        id: sendId,
+        type: type,
+        destination: destination,
+        button: button,
+        countdown: countdown
+    });
+}
 
         async function sendMessage(destination, message) {
             try {
