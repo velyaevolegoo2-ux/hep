@@ -813,25 +813,24 @@
             return match ? match[0] : null;
         }
 
-        async function autoTranslate() {
+       async function autoTranslate() {
     const englishText = document.getElementById('englishText').value.trim();
     if (!englishText) return;
-
     const russianField = document.getElementById('russianText');
     
     russianField.value = '⏳';
     russianField.style.color = '#999';
-
     try {
-        // Detect language to determine if we need to add order numbers
+        // Detect language to determine direction
         const isRussian = /[а-яё]/i.test(englishText);
+        const direction = isRussian ? 'to_english' : 'to_russian';
         
         const response = await fetch(`${API_URL}/api/translate/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text: englishText,
-                direction: 'to_russian',
+                direction: direction,
                 order_number: currentOrder ? currentOrder.order_number : 'unknown'
             })
         });
