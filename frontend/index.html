@@ -947,17 +947,19 @@
         }
 
         function restoreButton(button, type) {
-            if (!button) return;
-            
-            if (type === 'problems') {
-                button.textContent = '?';
-            } else if (type === 'pricing') {
-                button.textContent = '💰';
-            } else if (type === 'master') {
-                const masterCode = extractMasterCode(currentOrder?.master);
-                button.textContent = `➤ ${masterCode || 'Мастер'}`;
-            }
-        }
+    if (!button) return;
+    
+    if (type === 'problems') {
+        button.textContent = '?';
+    } else if (type === 'pricing') {
+        button.textContent = '💰';
+    } else if (type === 'delo') {
+        button.textContent = 'Дело';
+    } else if (type === 'master') {
+        const masterCode = extractMasterCode(currentOrder?.master);
+        button.textContent = `➤ ${masterCode || 'Мастер'}`;
+    }
+}
 
         function clearFields() {
             document.getElementById('englishText').value = '';
