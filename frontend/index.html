@@ -1073,13 +1073,22 @@
     button.disabled = true;
     
     try {
-        // Extract order/master numbers if present
+        // Extract order/master numbers if present (first line)
         const lines = text.split('\n');
-        const firstLine = lines[0];
-        const hasOrderNumber = /^[A-ZА-Я]+\d+\s+[a-z]\d+$/i.test(firstLine.trim());
+        const firstLine = lines[0].trim();
         
-        // Get text without order numbers for rephrasing
-        const textToRephrase = hasOrderNumber ? lines.slice(1).join('\n') : text;
+        // Check if first line has format: MASTER ORDER (e.g., "K27 a500" or "К27 а500")
+        const hasOrderNumber = /^[A-ZА-Я]+\d+\s+[a-zа-я]\d+$/i.test(firstLine);
+        
+        // Get text without first line if it has order numbers
+        const textToRephrase = hasOrderNumber ? lines.slice(1).join('\n').trim() : text;
+        
+        if (!textToRephrase) {
+            alert('Нет текста для перефразирования (только номера)');
+            button.textContent = originalEmoji;
+            button.disabled = false;
+            return;
+        }
         
         const response = await fetch(`${API_URL}/api/rephrase/`, {
             method: 'POST',
