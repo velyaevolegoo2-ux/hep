@@ -814,42 +814,51 @@
         }
 
         async function autoTranslate() {
-            const englishText = document.getElementById('englishText').value.trim();
-            if (!englishText) return;
+    const englishText = document.getElementById('englishText').value.trim();
+    if (!englishText) return;
 
-            const russianField = document.getElementById('russianText');
-            
-            russianField.value = '⏳';
-            russianField.style.color = '#999';
+    const russianField = document.getElementById('russianText');
+    
+    russianField.value = '⏳';
+    russianField.style.color = '#999';
 
-            try {
-                const response = await fetch(`${API_URL}/api/translate/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: englishText,
-                        direction: 'to_russian',
-                        order_number: currentOrder ? currentOrder.order_number : 'unknown'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                russianField.style.color = '';
-                
-                if (currentOrder) {
-                    russianField.value = `${currentOrder.order_number}\n${data.translation}`;
-                } else {
-                    russianField.value = data.translation;
-                }
-                
-                autoResizeTextarea(russianField);
-            } catch (error) {
-                console.error('Translation failed:', error);
-                russianField.style.color = '';
-                russianField.value = 'Ошибка перевода';
+    try {
+        // Detect language to determine if we need to add order numbers
+        const isRussian = /[а-яё]/i.test(englishText);
+        
+        const response = await fetch(`${API_URL}/api/translate/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: englishText,
+                direction: 'to_russian',
+                order_number: currentOrder ? currentOrder.order_number : 'unknown'
+            })
+        });
+        
+        const data = await response.json();
+        russianField.style.color = '';
+        
+        // Add master and order number ONLY if translating TO Russian (EN→RU)
+        if (currentOrder && !isRussian) {
+            const masterCode = extractMasterCode(currentOrder.master);
+            if (masterCode) {
+                russianField.value = `${masterCode} ${currentOrder.order_number}\n${data.translation}`;
+            } else {
+                russianField.value = `${currentOrder.order_number}\n${data.translation}`;
             }
+        } else {
+            // RU→EN: no numbers
+            russianField.value = data.translation;
         }
+        
+        autoResizeTextarea(russianField);
+    } catch (error) {
+        console.error('Translation failed:', error);
+        russianField.style.color = '';
+        russianField.value = 'Ошибка перевода';
+    }
+}
 
         function toggleSend(type, button) {
             const existing = pendingSends.find(s => s.button === button);
