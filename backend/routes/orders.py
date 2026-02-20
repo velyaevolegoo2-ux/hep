@@ -90,7 +90,7 @@ async def get_order(order_number: str, db: Session = Depends(get_db)):
 @router.post("/sync-notion")
 async def sync_notion(db: Session = Depends(get_db)):
     """
-    Sync orders from Notion to local cache
+    Sync orders from Notion to local cache - OPTIMIZED VERSION
     
     Returns:
         {
@@ -102,36 +102,42 @@ async def sync_notion(db: Session = Depends(get_db)):
         # Fetch from Notion
         orders = await sync_orders_from_notion()
         
-        synced_count = 0
-        batch_size = 100  # Process in batches of 100
+        # Load ALL existing orders into memory at once (FAST!)
+        existing_orders = {
+            order.order_number: order 
+            for order in db.query(OrderCache).all()
+        }
         
-        for i in range(0, len(orders), batch_size):
-            batch = orders[i:i+batch_size]
+        synced_count = 0
+        new_orders = []
+        now = datetime.utcnow()
+        
+        # Process all orders
+        for order_data in orders:
+            order_number = order_data.get("order_number")
+            if not order_number:
+                continue
             
-            for order_data in batch:
-                if not order_data.get("order_number"):
-                    continue  # Skip orders without number
-                
-                # Check if order exists
-                existing = db.query(OrderCache).filter(
-                    OrderCache.order_number == order_data["order_number"]
-                ).first()
-                
-                if existing:
-                    # Update existing
-                    for key, value in order_data.items():
-                        if key != "notion_page_id":
-                            setattr(existing, key, value)
-                    existing.last_synced = datetime.utcnow()
-                else:
-                    # Create new
-                    new_order = OrderCache(**order_data)
-                    db.add(new_order)
-                
-                synced_count += 1
+            if order_number in existing_orders:
+                # Update existing order
+                existing = existing_orders[order_number]
+                for key, value in order_data.items():
+                    if key != "notion_page_id":
+                        setattr(existing, key, value)
+                existing.last_synced = now
+            else:
+                # Create new order
+                new_order = OrderCache(**order_data, last_synced=now)
+                new_orders.append(new_order)
             
-            # Commit this batch
-            db.commit()
+            synced_count += 1
+        
+        # Bulk insert new orders
+        if new_orders:
+            db.bulk_save_objects(new_orders)
+        
+        # Single commit for everything
+        db.commit()
         
         return {
             "success": True,
