@@ -30,11 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(orders.router, prefix="/api")
-app.include_router(translate.router, prefix="/api")
-app.include_router(telegram.router, prefix="/api")
-app.include_router(simple_auth.router, prefix="/api/auth")
+# Include routers (they have their own prefixes)
+app.include_router(orders.router)
+app.include_router(translate.router)
+app.include_router(telegram.router)
+app.include_router(simple_auth.router)
 app.include_router(rephrase.router, prefix="/api")
 
 @app.get("/")
