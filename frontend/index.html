@@ -798,13 +798,12 @@
             renderOrders(filtered);
         }
 
-       async function selectOrder(orderNumber, event) {
+      async function selectOrder(orderNumber, event) {
     try {
         // Send all pending messages immediately before switching
         if (pendingSends.length > 0) {
             for (const send of pendingSends) {
                 clearInterval(send.countdown);
-                // Send immediately
                 await sendMessage(send.destination, document.getElementById('russianText').value.trim());
                 restoreButton(send.button, send.type);
             }
@@ -816,6 +815,13 @@
         document.getElementById('russianText').value = '';
         
         const response = await fetch(`${API_URL}/api/orders/${orderNumber}`);
+        
+        if (!response.ok) {
+            console.error(`Order ${orderNumber} not found`);
+            alert(`Заказ ${orderNumber} не найден. Попробуйте синхронизацию с Notion.`);
+            return;
+        }
+        
         currentOrder = await response.json();
         displayOrderInfo();
         
@@ -829,6 +835,7 @@
         }
     } catch (error) {
         console.error('Failed to load order:', error);
+        alert('Ошибка загрузки заказа');
     }
 }
 
