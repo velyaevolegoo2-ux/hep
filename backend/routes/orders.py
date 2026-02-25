@@ -38,7 +38,7 @@ async def get_orders(search: str = None, db: Session = Depends(get_db)):
     return [
         {
             "id": order.id,
-            "order_number": order.number,
+            "order_number": order.order_number,
             "master": order.master,
             "status": order.status,
             "deadline": order.deadline,
