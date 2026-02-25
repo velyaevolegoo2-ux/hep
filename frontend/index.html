@@ -832,7 +832,7 @@
     }
 }
 
-        function displayOrderInfo() {
+       function displayOrderInfo() {
     if (!currentOrder) return;
 
     document.getElementById('orderNumber').textContent = currentOrder.order_number;
@@ -852,13 +852,17 @@
     const russianField = document.getElementById('russianText');
     const currentText = russianField.value.trim();
     
-    // Only add if field is empty or doesn't already have the number
-    if (!currentText || !currentText.startsWith(masterCode)) {
-        if (masterCode) {
-            russianField.value = `${masterCode} ${currentOrder.order_number}\n`;
-        } else {
-            russianField.value = `${currentOrder.order_number}\n`;
-        }
+    // Build the prefix
+    let prefix = '';
+    if (masterCode) {
+        prefix = `${masterCode} ${currentOrder.order_number}\n`;
+    } else {
+        prefix = `${currentOrder.order_number}\n`;
+    }
+    
+    // Only add if field is empty or doesn't already have this prefix
+    if (!currentText || !currentText.startsWith(prefix.trim())) {
+        russianField.value = prefix;
     }
 }
         function formatDate(dateStr) {
