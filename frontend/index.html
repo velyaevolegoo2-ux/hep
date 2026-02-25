@@ -833,21 +833,34 @@
 }
 
         function displayOrderInfo() {
-            if (!currentOrder) return;
+    if (!currentOrder) return;
 
-            document.getElementById('orderNumber').textContent = currentOrder.order_number;
-            
-            const metaTags = [];
-            if (currentOrder.master) metaTags.push(`<span class="meta-tag">${currentOrder.master}</span>`);
-            if (currentOrder.sum_etsy) metaTags.push(`<span class="meta-tag">${currentOrder.sum_etsy}</span>`);
-            if (currentOrder.deadline) metaTags.push(`<span class="meta-tag">Нужен к: ${formatDate(currentOrder.deadline)}</span>`);
-            if (currentOrder.master_date) metaTags.push(`<span class="meta-tag">Дата мастера: ${formatDate(currentOrder.master_date)}</span>`);
-            if (currentOrder.tags) metaTags.push(`<span class="meta-tag">${currentOrder.tags}</span>`);
-            if (currentOrder.etsy_link) metaTags.push(`<span class="meta-tag"><a href="${currentOrder.etsy_link}" target="_blank">etsy</a></span>`);
-            
-            document.getElementById('orderMeta').innerHTML = metaTags.join('');
+    document.getElementById('orderNumber').textContent = currentOrder.order_number;
+    
+    const metaTags = [];
+    if (currentOrder.master) metaTags.push(`<span class="meta-tag">${currentOrder.master}</span>`);
+    if (currentOrder.sum_etsy) metaTags.push(`<span class="meta-tag">${currentOrder.sum_etsy}</span>`);
+    if (currentOrder.deadline) metaTags.push(`<span class="meta-tag">Нужен к: ${formatDate(currentOrder.deadline)}</span>`);
+    if (currentOrder.master_date) metaTags.push(`<span class="meta-tag">Дата мастера: ${formatDate(currentOrder.master_date)}</span>`);
+    if (currentOrder.tags) metaTags.push(`<span class="meta-tag">${currentOrder.tags}</span>`);
+    if (currentOrder.etsy_link) metaTags.push(`<span class="meta-tag"><a href="${currentOrder.etsy_link}" target="_blank">etsy</a></span>`);
+    
+    document.getElementById('orderMeta').innerHTML = metaTags.join('');
+    
+    // Add master and order number to russian field immediately
+    const masterCode = extractMasterCode(currentOrder.master);
+    const russianField = document.getElementById('russianText');
+    const currentText = russianField.value.trim();
+    
+    // Only add if field is empty or doesn't already have the number
+    if (!currentText || !currentText.startsWith(masterCode)) {
+        if (masterCode) {
+            russianField.value = `${masterCode} ${currentOrder.order_number}\n`;
+        } else {
+            russianField.value = `${currentOrder.order_number}\n`;
         }
-
+    }
+}
         function formatDate(dateStr) {
             if (!dateStr) return '';
             const date = new Date(dateStr);
