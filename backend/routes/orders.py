@@ -148,7 +148,8 @@ async def sync_notion(db: Session = Depends(get_db)):
         db.rollback()
         print(f"Error during sync: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-        @router.delete("/clear-cache")
+
+@router.delete("/clear-cache")
 async def clear_cache(db: Session = Depends(get_db)):
     """
     Clear all cached orders (for debugging/maintenance)
