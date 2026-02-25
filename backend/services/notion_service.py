@@ -85,7 +85,7 @@ def _get_title(prop) -> str:
         return ""
     title_array = prop.get("title", [])
     if title_array:
-        return title_array[0].get("plain_text", "")
+        return title_array[0].get("plain_text", "").strip()
     return ""
 
 def _get_rich_text(prop) -> str:
